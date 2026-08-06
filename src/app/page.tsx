@@ -14,31 +14,41 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
+  function cleanFilters(f: Filters): Record<string, string> {
+    return Object.fromEntries(
+      Object.entries(f).filter(([, v]) => v !== undefined && v !== "")
+    );
+  }
+
   async function runSearch(q: string, f: Filters = filters) {
     if (!q.trim()) return;
     setQuery(q);
     setLoading(true);
     setSearched(true);
     try {
-      const params = new URLSearchParams({ q, ...cleanFilters(f) });
-      const res = await fetch(`/api/search?${params.toString()}`);
+      const searchParams = new URLSearchParams({ q, ...cleanFilters(f) });
+      const url = "/api/search?" + searchParams.toString();
+      const res = await fetch(url);
       const data = await res.json();
       setResults(data.results ?? []);
+    } catch (error) {
+      console.error("Erro na busca:", error);
+      setResults([]);
     } finally {
       setLoading(false);
     }
   }
 
-  function cleanFilters(f: Filters): Record<string, string> {
-    return Object.fromEntries(Object.entries(f).filter(([, v]) => v));
-  }
-
   async function toggleFavorite(track: Track) {
-    await fetch("/api/favorites", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ trackId: track.id }),
-    });
+    try {
+      await fetch("/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trackId: track.id }),
+      });
+    } catch (error) {
+      console.error("Erro ao favoritar:", error);
+    }
   }
 
   return (
@@ -46,7 +56,9 @@ export default function HomePage() {
       <section className="flex flex-col items-center gap-4 py-6 text-center">
         <div className="flex items-center gap-2 text-signal">
           <Disc3 className="h-8 w-8 animate-[spin_6s_linear_infinite]" />
-          <span className="font-mono text-xs uppercase tracking-widest">Encontre a próxima faixa do seu set</span>
+          <span className="font-mono text-xs uppercase tracking-widest">
+            Encontre a próxima faixa do seu set
+          </span>
         </div>
         <h1 className="max-w-2xl font-display text-3xl font-bold sm:text-4xl">
           Busque por música, artista, BPM ou tonalidade — tudo num só lugar.
@@ -79,7 +91,11 @@ export default function HomePage() {
       {!loading && results.length > 0 && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {results.map((track) => (
-            <TrackCard key={track.id} track={track} onToggleFavorite={toggleFavorite} />
+            <TrackCard
+              key={track.id}
+              track={track}
+              onToggleFavorite={toggleFavorite}
+            />
           ))}
         </div>
       )}
