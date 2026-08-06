@@ -1,0 +1,40 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-base text-paper-soft font-body antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+html.light body {
+  @apply bg-paper text-base;
+}
+
+/* Badge de tonalidade estilo Camelot Wheel — o "carimbo técnico" do produto */
+.key-badge {
+  @apply font-mono text-xs px-2 py-0.5 rounded-md border border-base-border bg-base-surface text-signal;
+}
+html.light .key-badge {
+  @apply border-paper-border bg-paper-surface text-signal-dim;
+}
+
+.bpm-badge {
+  @apply font-mono text-xs px-2 py-0.5 rounded-md border border-base-border bg-base-surface text-pulse;
+}
+html.light .bpm-badge {
+  @apply border-paper-border bg-paper-surface;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { @apply bg-base-border rounded-full; }
