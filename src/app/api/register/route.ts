@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       data: {
         email,
         name,
-        password: hashedPassword,
+        passwordHash: hashedPassword,
       },
     });
 
