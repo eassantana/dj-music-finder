@@ -1,33 +1,37 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { PrismaClient } from "@prisma/client";
 
-const registerSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(6),
-});
+const prisma = new PrismaClient();
 
-export async function POST(req: Request) {
-  const body = await req.json();
-  const parsed = registerSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { email, name, password } = body;
+
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: "Dados incompletos" },
+        { status: 400 }
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        name,
+        passwordHash: hashedPassword,
+      },
+    });
+
+    return NextResponse.json(user);
+  } catch (error: any) {
+    console.error("ERRO NO CADASTRO:", error);
+    return NextResponse.json(
+      { error: error?.message || "Erro interno no servidor" },
+      { status: 500 }
+    );
   }
-
-  const { name, email, password } = parsed.data;
-
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return NextResponse.json({ error: "Este email já está cadastrado." }, { status: 409 });
-  }
-
-  const passwordHash = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({
-    data: { name, email, passwordHash },
-    select: { id: true, name: true, email: true },
-  });
-
-  return NextResponse.json({ user }, { status: 201 });
 }

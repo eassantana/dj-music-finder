@@ -1,22 +1,23 @@
 // DJ Music Finder — Prisma schema
-// Banco recomendado: PostgreSQL (funciona também com SQLite trocando o provider p/ "sqlite")
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String          @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String          @unique
+  password      String?         // Nome mantido conforme a rota de cadastro (password)
   passwordHash  String?
   image         String?
-  createdAt     DateTime  @default(now())
+  createdAt     DateTime        @default(now())
 
   favorites     Favorite[]
   playlists     Playlist[]
@@ -26,7 +27,6 @@ model User {
 }
 
 // Cache local das faixas retornadas pelas APIs externas (Spotify/Deezer/etc.)
-// Evita bater na API externa toda vez e guarda o "id interno" usado por favoritos/playlists/notas.
 model Track {
   id          String   @id @default(cuid())
   title       String
@@ -39,21 +39,22 @@ model Track {
   bpm         Float?
   key         String?  // tonalidade, ex: "8A" (Camelot) ou "A Minor"
   popularity  Int?     // 0-100
-  previewUrl  String?
+  previewUrl  String?  // URL direta do áudio (ex: MP3 de prévia de 30s)
+  audioUrl    String?  // URL customizada para arquivo de áudio completo/upload
 
-  // ids externos para permitir deep-link e evitar duplicidade
+  // ids externos
   spotifyId   String?  @unique
   deezerId    String?  @unique
 
-  // links por serviço (JSON: { spotify, youtubeMusic, appleMusic, deezer, soundcloud, beatport, bandcamp, traxsource })
+  // links por serviço
   streamLinks Json?
 
   createdAt   DateTime @default(now())
 
-  favorites   Favorite[]
+  favorites      Favorite[]
   playlistTracks PlaylistTrack[]
-  notes       Note[]
-  ratings     Rating[]
+  notes          Note[]
+  ratings        Rating[]
 
   @@index([title, artist])
   @@index([genre])

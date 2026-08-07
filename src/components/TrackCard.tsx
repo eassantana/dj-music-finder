@@ -1,102 +1,92 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
+import { Track } from "@/types/track";
+import { Heart } from "lucide-react";
 import { useState } from "react";
-import { Heart, Music2, PlusCircle } from "lucide-react";
-import { Track, formatDuration } from "@/types/track";
 
-const SERVICE_LABELS: Record<string, string> = {
-  spotify: "Spotify",
-  youtubeMusic: "YT Music",
-  appleMusic: "Apple Music",
-  deezer: "Deezer",
-  soundcloud: "SoundCloud",
-  beatport: "Beatport",
-  bandcamp: "Bandcamp",
-  traxsource: "Traxsource",
-};
-
-export function TrackCard({
-  track,
-  isFavorite = false,
-  onToggleFavorite,
-  onAddToPlaylist,
-}: {
+interface TrackCardProps {
   track: Track;
-  isFavorite?: boolean;
   onToggleFavorite?: (track: Track) => void;
-  onAddToPlaylist?: (track: Track) => void;
-}) {
-  const [fav, setFav] = useState(isFavorite);
+}
+
+export function TrackCard({ track, onToggleFavorite }: TrackCardProps) {
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  const audioSource = track.previewUrl || (track as any).audioUrl;
+
+  const handleFavoriteClick = () => {
+    setIsFavorite(!isFavorite);
+    if (onToggleFavorite) {
+      onToggleFavorite(track);
+    }
+  };
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-xl2 border border-base-border bg-base-surface transition hover:border-signal/60">
-      <Link href={`/track/${track.id}`} className="relative aspect-square w-full overflow-hidden bg-base">
+    <div className="flex flex-col justify-between p-4 bg-zinc-900/80 border border-zinc-800 rounded-xl hover:border-zinc-700 transition">
+      <div>
+        {/* Capa do Álbum */}
         {track.coverUrl ? (
-          <Image src={track.coverUrl} alt={`Capa de ${track.title}`} fill className="object-cover" />
+          <img
+            src={track.coverUrl}
+            alt={track.title}
+            className="w-full aspect-square object-cover rounded-lg mb-3"
+          />
         ) : (
-          <div className="flex h-full items-center justify-center text-paper-soft/30">
-            <Music2 className="h-10 w-10" />
+          <div className="w-full aspect-square bg-zinc-800 rounded-lg mb-3 flex items-center justify-center text-zinc-500 text-xs">
+            Sem capa
           </div>
         )}
-      </Link>
 
-      <div className="flex flex-1 flex-col gap-2 p-3">
-        <div>
-          <Link href={`/track/${track.id}`} className="line-clamp-1 font-display text-sm font-semibold hover:text-signal">
-            {track.title}
-          </Link>
-          <p className="line-clamp-1 text-xs text-paper-soft/60">{track.artist}</p>
-        </div>
+        {/* Informações da Música */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="overflow-hidden">
+            <h3 className="font-bold text-white text-sm truncate" title={track.title}>
+              {track.title}
+            </h3>
+            <p className="text-xs text-zinc-400 truncate" title={track.artist}>
+              {track.artist}
+            </p>
+          </div>
 
-        <div className="flex flex-wrap gap-1.5">
-          {track.bpm && <span className="bpm-badge">{Math.round(track.bpm)} BPM</span>}
-          {track.key && <span className="key-badge">{track.key}</span>}
-          <span className="key-badge">{formatDuration(track.durationMs)}</span>
-          {typeof track.popularity === "number" && (
-            <span className="key-badge">★ {track.popularity}</span>
+          {/* Botão de Favoritar */}
+          {onToggleFavorite && (
+            <button
+              onClick={handleFavoriteClick}
+              className="p-1 text-zinc-400 hover:text-red-500 transition"
+              title="Favoritar"
+            >
+              <Heart
+                className={`h-4 w-4 ${
+                  isFavorite ? "fill-red-500 text-red-500" : ""
+                }`}
+              />
+            </button>
           )}
         </div>
 
-        {track.streamLinks && (
-          <div className="flex flex-wrap gap-1.5 pt-1 text-[10px] text-paper-soft/50">
-            {Object.entries(track.streamLinks)
-              .filter(([, url]) => url)
-              .slice(0, 4)
-              .map(([service, url]) => (
-                <a
-                  key={service}
-                  href={url as string}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded border border-base-border px-1.5 py-0.5 hover:border-signal hover:text-signal"
-                >
-                  {SERVICE_LABELS[service] ?? service}
-                </a>
-              ))}
-          </div>
-        )}
-
-        <div className="mt-auto flex items-center justify-between pt-2">
-          <button
-            onClick={() => {
-              setFav((f) => !f);
-              onToggleFavorite?.(track);
-            }}
-            aria-label="Favoritar"
-            className="rounded-full p-1.5 hover:bg-base-border"
-          >
-            <Heart className={`h-4 w-4 ${fav ? "fill-signal text-signal" : "text-paper-soft/50"}`} />
-          </button>
-          <button
-            onClick={() => onAddToPlaylist?.(track)}
-            aria-label="Adicionar à playlist"
-            className="rounded-full p-1.5 hover:bg-base-border"
-          >
-            <PlusCircle className="h-4 w-4 text-paper-soft/50 hover:text-signal" />
-          </button>
+        {/* BPM e Tonalidade (Key) */}
+        <div className="flex items-center gap-2 mt-2 text-[11px] text-zinc-400 font-mono">
+          {track.bpm && <span>{track.bpm} BPM</span>}
+          {track.key && (
+            <span className="bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-300">
+              {track.key}
+            </span>
+          )}
         </div>
+      </div>
+
+      {/* Player de Áudio para Tocar no Site */}
+      <div className="mt-3">
+        {audioSource ? (
+          <audio controls className="w-full h-8 rounded accent-signal">
+            <source src={audioSource} type="audio/mpeg" />
+            Seu navegador não suporta o tocador de áudio.
+          </audio>
+        ) : (
+          <p className="text-[10px] text-zinc-600 text-center italic">
+            Sem prévia de áudio
+          </p>
+        )}
       </div>
     </div>
   );
