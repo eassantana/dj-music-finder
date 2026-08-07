@@ -26,12 +26,5 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(user);
-  } catch (error: any) {
-    console.error("ERRO NO CADASTRO:", error);
-    return NextResponse.json(
-      { error: error?.message || "Erro interno no servidor" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({ user }, { status: 201 });
 }
